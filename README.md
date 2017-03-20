@@ -15,7 +15,7 @@ Logic-less Mustache-style template engine with safe rendering for Ruby.
 Add to your Gemfile:
 
 ```ruby
-gem 'philiprehberger-template'
+gem "philiprehberger-template"
 ```
 
 Or install directly:
