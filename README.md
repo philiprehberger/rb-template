@@ -59,7 +59,7 @@ tpl.render(greeting: 'Hi', user: { name: 'Alice' })
 # => "Hi, Alice"
 ```
 
-## Supported Syntax
+### Supported Syntax
 
 | Tag | Description |
 |-----|-------------|
