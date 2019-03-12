@@ -7,6 +7,11 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-03-24
+
+### Fixed
+- Standardize README API section to table format
+
 ## [0.1.8] - 2026-03-23
 
 ### Fixed

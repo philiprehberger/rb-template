@@ -69,17 +69,11 @@ tpl.render(greeting: 'Hi', user: { name: 'Alice' })
 
 ## API
 
-### `Philiprehberger::Template.new(source)`
-
-Compiles a template string into a renderable template.
-
-### `Philiprehberger::Template.from_file(path)`
-
-Reads a file and compiles its contents as a template.
-
-### `#render(variables = {})`
-
-Renders the template with the given variable hash. Accepts both symbol and string keys. Missing variables produce an empty string.
+| Method | Description |
+|--------|-------------|
+| `Template.new(source)` | Compile a template string into a renderable template |
+| `Template.from_file(path)` | Read a file and compile its contents as a template |
+| `#render(variables = {})` | Render the template with the given variable hash |
 
 ## Development
 
