@@ -27,7 +27,7 @@ gem install philiprehberger-template
 ## Usage
 
 ```ruby
-require 'philiprehberger/template'
+require "philiprehberger/template"
 
 # Simple variable interpolation
 tpl = Philiprehberger::Template.new('Hello, {{name}}!')
