@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Philip Rehberger']
   spec.email         = ['me@philiprehberger.com']
 
-  spec.summary       = 'Logic-less Mustache-style template engine with safe rendering'
+  spec.summary       = 'Logic-less Mustache-style template engine with safe rendering for Ruby'
   spec.description   = 'A lightweight Mustache-style template engine supporting variable ' \
                        'interpolation, sections, inverted sections, and nested scopes ' \
                        'with safe rendering that never raises on missing variables.'
