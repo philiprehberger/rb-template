@@ -68,6 +68,10 @@ Metrics/ModuleLength:
 Metrics/ParameterLists:
   Max: 8
 
+Metrics/BlockNesting:
+  Exclude:
+    - "lib/philiprehberger/template/renderer.rb"
+
 Metrics/CollectionLiteralLength:
   Enabled: false
 

@@ -193,4 +193,312 @@ RSpec.describe Philiprehberger::Template do
       file&.unlink
     end
   end
+
+  # ── New Feature Tests ──
+
+  describe 'partials' do
+    before { described_class.clear_partials! }
+
+    it 'renders a registered partial' do
+      described_class.register_partial('header', '<h1>{{title}}</h1>')
+      tpl = described_class.new('{{> header}}')
+      expect(tpl.render(title: 'Welcome')).to eq('<h1>Welcome</h1>')
+    end
+
+    it 'renders an empty string for unregistered partials' do
+      tpl = described_class.new('before{{> missing}}after')
+      expect(tpl.render({})).to eq('beforeafter')
+    end
+
+    it 'renders multiple partials' do
+      described_class.register_partial('header', '<h1>{{title}}</h1>')
+      described_class.register_partial('footer', '<footer>{{year}}</footer>')
+      tpl = described_class.new('{{> header}}{{> footer}}')
+      expect(tpl.render(title: 'Hi', year: 2026)).to eq('<h1>Hi</h1><footer>2026</footer>')
+    end
+
+    it 'renders partials with variables from context' do
+      described_class.register_partial('greeting', 'Hello, {{name}}!')
+      tpl = described_class.new('{{> greeting}}')
+      expect(tpl.render(name: 'Alice')).to eq('Hello, Alice!')
+    end
+
+    it 'renders nested partials' do
+      described_class.register_partial('inner', '({{val}})')
+      described_class.register_partial('outer', '[{{> inner}}]')
+      tpl = described_class.new('{{> outer}}')
+      expect(tpl.render(val: 'deep')).to eq('[(deep)]')
+    end
+
+    it 'renders partials inside sections' do
+      described_class.register_partial('item', '* {{name}}')
+      tpl = described_class.new('{{#items}}{{> item}} {{/items}}')
+      result = tpl.render(items: [{ name: 'a' }, { name: 'b' }])
+      expect(result).to eq('* a * b ')
+    end
+
+    it 'clears all partials' do
+      described_class.register_partial('test', 'content')
+      described_class.clear_partials!
+      expect(described_class.partials).to be_empty
+    end
+  end
+
+  describe 'custom delimiters' do
+    it 'changes delimiters mid-template' do
+      tpl = described_class.new('{{name}} {{= <% %> =}} <%greeting%>')
+      expect(tpl.render(name: 'Alice', greeting: 'Hi')).to eq('Alice  Hi')
+    end
+
+    it 'uses new delimiters for sections' do
+      tpl = described_class.new('{{= <% %> =}}<%#show%>visible<%/show%>')
+      expect(tpl.render(show: true)).to eq('visible')
+    end
+
+    it 'uses new delimiters for inverted sections' do
+      tpl = described_class.new('{{= <% %> =}}<%^show%>hidden<%/show%>')
+      expect(tpl.render(show: false)).to eq('hidden')
+    end
+
+    it 'supports ERB-style delimiters' do
+      tpl = described_class.new('{{= <% %> =}}<%name%>')
+      expect(tpl.render(name: 'test')).to eq('test')
+    end
+
+    it 'supports single-character delimiters' do
+      tpl = described_class.new('{{= < > =}}<name>')
+      expect(tpl.render(name: 'value')).to eq('value')
+    end
+  end
+
+  describe 'filters' do
+    before { Philiprehberger::Template::Filters.reset_custom! }
+
+    it 'applies upcase filter' do
+      tpl = described_class.new('{{name | upcase}}')
+      expect(tpl.render(name: 'hello')).to eq('HELLO')
+    end
+
+    it 'applies downcase filter' do
+      tpl = described_class.new('{{name | downcase}}')
+      expect(tpl.render(name: 'HELLO')).to eq('hello')
+    end
+
+    it 'applies strip filter' do
+      tpl = described_class.new('{{name | strip}}')
+      expect(tpl.render(name: '  hello  ')).to eq('hello')
+    end
+
+    it 'applies escape filter' do
+      tpl = described_class.new('{{content | escape}}')
+      expect(tpl.render(content: '<b>bold</b>')).to eq('&lt;b&gt;bold&lt;/b&gt;')
+    end
+
+    it 'applies capitalize filter' do
+      tpl = described_class.new('{{name | capitalize}}')
+      expect(tpl.render(name: 'hello world')).to eq('Hello world')
+    end
+
+    it 'applies reverse filter' do
+      tpl = described_class.new('{{name | reverse}}')
+      expect(tpl.render(name: 'hello')).to eq('olleh')
+    end
+
+    it 'applies length filter to string' do
+      tpl = described_class.new('{{name | length}}')
+      expect(tpl.render(name: 'hello')).to eq('5')
+    end
+
+    it 'applies length filter to array' do
+      tpl = described_class.new('{{items | length}}')
+      expect(tpl.render(items: [1, 2, 3])).to eq('3')
+    end
+
+    it 'applies default filter for nil value' do
+      tpl = described_class.new('{{name | default(N/A)}}')
+      expect(tpl.render({})).to eq('N/A')
+    end
+
+    it 'applies default filter for empty string' do
+      tpl = described_class.new('{{name | default(none)}}')
+      expect(tpl.render(name: '')).to eq('none')
+    end
+
+    it 'does not apply default filter when value is present' do
+      tpl = described_class.new('{{name | default(none)}}')
+      expect(tpl.render(name: 'Alice')).to eq('Alice')
+    end
+
+    it 'chains multiple filters' do
+      tpl = described_class.new('{{name | strip | upcase}}')
+      expect(tpl.render(name: '  hello  ')).to eq('HELLO')
+    end
+
+    it 'chains three filters' do
+      tpl = described_class.new('{{name | strip | downcase | reverse}}')
+      expect(tpl.render(name: '  HELLO  ')).to eq('olleh')
+    end
+
+    it 'handles unknown filters gracefully' do
+      tpl = described_class.new('{{name | nonexistent}}')
+      expect(tpl.render(name: 'hello')).to eq('hello')
+    end
+
+    it 'supports custom filters' do
+      Philiprehberger::Template::Filters.register('shout', ->(val) { "#{val}!!!" })
+      tpl = described_class.new('{{name | shout}}')
+      expect(tpl.render(name: 'hello')).to eq('hello!!!')
+    end
+
+    it 'resets custom filters' do
+      Philiprehberger::Template::Filters.register('test', ->(val) { val })
+      Philiprehberger::Template::Filters.reset_custom!
+      expect(Philiprehberger::Template::Filters.resolve('test')).to be_nil
+    end
+
+    it 'applies escape filter with special characters' do
+      tpl = described_class.new('{{msg | escape}}')
+      expect(tpl.render(msg: '"quotes" & <tags>')).to eq('&quot;quotes&quot; &amp; &lt;tags&gt;')
+    end
+  end
+
+  describe 'template compilation and caching' do
+    before { described_class.clear_cache! }
+
+    it 'compiles and caches a template' do
+      tpl1 = described_class.compile('Hello, {{name}}!')
+      tpl2 = described_class.compile('Hello, {{name}}!')
+      expect(tpl1).to equal(tpl2)
+    end
+
+    it 'returns different templates for different sources' do
+      tpl1 = described_class.compile('Hello, {{name}}!')
+      tpl2 = described_class.compile('Goodbye, {{name}}!')
+      expect(tpl1).not_to equal(tpl2)
+    end
+
+    it 'renders cached templates correctly' do
+      tpl = described_class.compile('{{greeting}}, {{name}}!')
+      expect(tpl.render(greeting: 'Hi', name: 'Alice')).to eq('Hi, Alice!')
+      expect(tpl.render(greeting: 'Hey', name: 'Bob')).to eq('Hey, Bob!')
+    end
+
+    it 'clears the cache' do
+      described_class.compile('test')
+      described_class.clear_cache!
+      expect(described_class.cache.size).to eq(0)
+    end
+
+    it 'cache stores compiled templates' do
+      described_class.compile('one')
+      described_class.compile('two')
+      expect(described_class.cache.size).to eq(2)
+    end
+
+    it 'cache supports key lookup' do
+      described_class.compile('Hello!')
+      expect(described_class.cache.key?('Hello!')).to be true
+      expect(described_class.cache.key?('Missing')).to be false
+    end
+
+    it 'cache supports deletion' do
+      described_class.compile('to_delete')
+      described_class.cache.delete('to_delete')
+      expect(described_class.cache.key?('to_delete')).to be false
+    end
+  end
+
+  describe 'template inheritance/layouts' do
+    before do
+      described_class.clear_layouts!
+      described_class.clear_partials!
+    end
+
+    it 'renders a layout with block overrides' do
+      described_class.register_layout('base', '<html>{{$ title}}Default Title{{/title}}</html>')
+      tpl = described_class.new('{{< base}}{{$ title}}My Page{{/title}}{{/base}}')
+      expect(tpl.render({})).to eq('<html>My Page</html>')
+    end
+
+    it 'renders default block content when not overridden' do
+      described_class.register_layout('base', '<html>{{$ title}}Default{{/title}}</html>')
+      tpl = described_class.new('{{< base}}{{/base}}')
+      expect(tpl.render({})).to eq('<html>Default</html>')
+    end
+
+    it 'renders multiple blocks in a layout' do
+      described_class.register_layout('page', '{{$ header}}H{{/header}}|{{$ body}}B{{/body}}')
+      tpl = described_class.new('{{< page}}{{$ header}}MyHeader{{/header}}{{$ body}}MyBody{{/body}}{{/page}}')
+      expect(tpl.render({})).to eq('MyHeader|MyBody')
+    end
+
+    it 'renders layout with variables' do
+      described_class.register_layout('base', '<h1>{{title}}</h1>{{$ content}}default{{/content}}')
+      tpl = described_class.new('{{< base}}{{$ content}}Custom content{{/content}}{{/base}}')
+      expect(tpl.render(title: 'Hello')).to eq('<h1>Hello</h1>Custom content')
+    end
+
+    it 'renders without layout if layout not registered' do
+      tpl = described_class.new('{{< missing}}{{$ title}}content{{/title}}{{/missing}}')
+      expect(tpl.render({})).to eq('content')
+    end
+
+    it 'overrides only specified blocks, keeps defaults for others' do
+      described_class.register_layout('base', '{{$ a}}A{{/a}}|{{$ b}}B{{/b}}|{{$ c}}C{{/c}}')
+      tpl = described_class.new('{{< base}}{{$ b}}X{{/b}}{{/base}}')
+      expect(tpl.render({})).to eq('A|X|C')
+    end
+
+    it 'clears all layouts' do
+      described_class.register_layout('test', 'content')
+      described_class.clear_layouts!
+      expect(described_class.layouts).to be_empty
+    end
+  end
+
+  describe 'lambda support' do
+    it 'calls a lambda with raw block content' do
+      tpl = described_class.new('{{#bold}}text{{/bold}}')
+      result = tpl.render(bold: ->(raw) { "<b>#{raw}</b>" })
+      expect(result).to eq('<b>text</b>')
+    end
+
+    it 'calls a lambda with no arguments' do
+      tpl = described_class.new('{{#timestamp}}ignored{{/timestamp}}')
+      result = tpl.render(timestamp: ->(_raw) { '2026-01-01' })
+      expect(result).to eq('2026-01-01')
+    end
+
+    it 'calls a Proc' do
+      wrapper = proc { |raw| "[#{raw}]" }
+      tpl = described_class.new('{{#wrap}}content{{/wrap}}')
+      expect(tpl.render(wrap: wrapper)).to eq('[content]')
+    end
+
+    it 'passes raw template text to lambda (not rendered)' do
+      tpl = described_class.new('{{#fn}}{{name}}{{/fn}}')
+      captured = nil
+      result = tpl.render(
+        name: 'Alice',
+        fn: lambda { |raw|
+          captured = raw
+          'replaced'
+        }
+      )
+      expect(captured).to eq('{{name}}')
+      expect(result).to eq('replaced')
+    end
+
+    it 'lambda can return empty string' do
+      tpl = described_class.new('before{{#empty}}content{{/empty}}after')
+      result = tpl.render(empty: ->(_raw) { '' })
+      expect(result).to eq('beforeafter')
+    end
+
+    it 'lambda result is converted to string' do
+      tpl = described_class.new('{{#num}}x{{/num}}')
+      result = tpl.render(num: ->(_raw) { 42 })
+      expect(result).to eq('42')
+    end
+  end
 end
