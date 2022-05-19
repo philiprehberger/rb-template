@@ -9,6 +9,15 @@ require_relative 'template/cache'
 
 module Philiprehberger
   class Template
+    class UndefinedVariableError < StandardError
+      attr_reader :variable_name
+
+      def initialize(variable_name)
+        @variable_name = variable_name
+        super("Undefined variable: #{variable_name}")
+      end
+    end
+
     attr_reader :source, :tree
 
     @partials = {}
@@ -18,8 +27,8 @@ module Philiprehberger
     class << self
       attr_reader :cache, :partials, :layouts
 
-      def from_file(path)
-        new(File.read(path))
+      def from_file(path, strict: false)
+        new(File.read(path), strict: strict)
       end
 
       def register_partial(name, source)
@@ -38,12 +47,13 @@ module Philiprehberger
         @layouts = {}
       end
 
-      def compile(source)
-        cached = @cache.fetch(source)
+      def compile(source, strict: false)
+        cache_key = [source, strict]
+        cached = @cache.fetch(cache_key)
         return cached if cached
 
-        template = new(source)
-        @cache.store(source, template)
+        template = new(source, strict: strict)
+        @cache.store(cache_key, template)
         template
       end
 
@@ -52,9 +62,14 @@ module Philiprehberger
       end
     end
 
-    def initialize(source)
+    def initialize(source, strict: false)
       @source = source
+      @strict = strict
       @tree = Parser.new(source).parse
+    end
+
+    def strict?
+      @strict
     end
 
     def render(variables = {})
@@ -63,7 +78,8 @@ module Philiprehberger
         @tree,
         ctx,
         partials: self.class.partials,
-        layouts: self.class.layouts
+        layouts: self.class.layouts,
+        strict: @strict
       ).render
     end
   end

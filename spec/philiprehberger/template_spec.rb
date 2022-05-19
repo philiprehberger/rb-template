@@ -192,6 +192,17 @@ RSpec.describe Philiprehberger::Template do
     ensure
       file&.unlink
     end
+
+    it 'supports strict mode' do
+      file = Tempfile.new(['strict', '.mustache'])
+      file.write('Hello, {{name}}!')
+      file.close
+
+      tpl = described_class.from_file(file.path, strict: true)
+      expect(tpl.strict?).to be true
+    ensure
+      file&.unlink
+    end
   end
 
   # ── New Feature Tests ──
@@ -397,14 +408,14 @@ RSpec.describe Philiprehberger::Template do
 
     it 'cache supports key lookup' do
       described_class.compile('Hello!')
-      expect(described_class.cache.key?('Hello!')).to be true
-      expect(described_class.cache.key?('Missing')).to be false
+      expect(described_class.cache.key?(['Hello!', false])).to be true
+      expect(described_class.cache.key?(['Missing', false])).to be false
     end
 
     it 'cache supports deletion' do
       described_class.compile('to_delete')
-      described_class.cache.delete('to_delete')
-      expect(described_class.cache.key?('to_delete')).to be false
+      described_class.cache.delete(['to_delete', false])
+      expect(described_class.cache.key?(['to_delete', false])).to be false
     end
   end
 
@@ -499,6 +510,192 @@ RSpec.describe Philiprehberger::Template do
       tpl = described_class.new('{{#num}}x{{/num}}')
       result = tpl.render(num: ->(_raw) { 42 })
       expect(result).to eq('42')
+    end
+  end
+
+  # ── v0.4.0 Feature Tests ──
+
+  describe 'comment syntax' do
+    it 'strips simple comments from output' do
+      tpl = described_class.new('Hello{{! This is a comment }} World')
+      expect(tpl.render({})).to eq('Hello World')
+    end
+
+    it 'strips comments with no surrounding text' do
+      tpl = described_class.new('{{! comment only }}')
+      expect(tpl.render({})).to eq('')
+    end
+
+    it 'strips comments between variables' do
+      tpl = described_class.new('{{name}}{{! hidden }}{{greeting}}')
+      expect(tpl.render(name: 'Alice', greeting: 'Hi')).to eq('AliceHi')
+    end
+
+    it 'supports multi-line comments' do
+      tpl = described_class.new("Hello{{! this is\na multi-line comment }}World")
+      expect(tpl.render({})).to eq('HelloWorld')
+    end
+
+    it 'handles multiple comments in a template' do
+      tpl = described_class.new('A{{! first }}B{{! second }}C')
+      expect(tpl.render({})).to eq('ABC')
+    end
+
+    it 'handles comment at the beginning of template' do
+      tpl = described_class.new('{{! start comment }}Hello')
+      expect(tpl.render({})).to eq('Hello')
+    end
+
+    it 'handles comment at the end of template' do
+      tpl = described_class.new('Hello{{! end comment }}')
+      expect(tpl.render({})).to eq('Hello')
+    end
+
+    it 'does not leave whitespace from comment itself' do
+      tpl = described_class.new('before{{!comment}}after')
+      expect(tpl.render({})).to eq('beforeafter')
+    end
+
+    it 'works alongside variables and sections' do
+      tpl = described_class.new('{{name}}{{! skip }}{{#show}}visible{{/show}}')
+      expect(tpl.render(name: 'Hi', show: true)).to eq('Hivisible')
+    end
+
+    it 'handles comment with special characters inside' do
+      tpl = described_class.new('ok{{! <script>alert("xss")</script> }}ok')
+      expect(tpl.render({})).to eq('okok')
+    end
+  end
+
+  describe 'strict mode' do
+    it 'raises UndefinedVariableError for missing variables in strict mode' do
+      tpl = described_class.new('Hello, {{name}}!', strict: true)
+      expect { tpl.render({}) }.to raise_error(
+        Philiprehberger::Template::UndefinedVariableError,
+        /Undefined variable: name/
+      )
+    end
+
+    it 'includes the variable name in the error' do
+      tpl = described_class.new('{{missing_var}}', strict: true)
+      begin
+        tpl.render({})
+      rescue Philiprehberger::Template::UndefinedVariableError => e
+        expect(e.variable_name).to eq('missing_var')
+      end
+    end
+
+    it 'renders defined variables normally in strict mode' do
+      tpl = described_class.new('Hello, {{name}}!', strict: true)
+      expect(tpl.render(name: 'World')).to eq('Hello, World!')
+    end
+
+    it 'allows nil values that are explicitly defined' do
+      tpl = described_class.new('Hello, {{name}}!', strict: true)
+      expect(tpl.render(name: nil)).to eq('Hello, !')
+    end
+
+    it 'does not raise in default (non-strict) mode' do
+      tpl = described_class.new('Hello, {{name}}!')
+      expect(tpl.render({})).to eq('Hello, !')
+    end
+
+    it 'raises for filtered variables in strict mode' do
+      tpl = described_class.new('{{name | upcase}}', strict: true)
+      expect { tpl.render({}) }.to raise_error(
+        Philiprehberger::Template::UndefinedVariableError,
+        /Undefined variable: name/
+      )
+    end
+
+    it 'does not raise for sections referencing undefined variables' do
+      tpl = described_class.new('{{#missing}}content{{/missing}}', strict: true)
+      expect(tpl.render({})).to eq('')
+    end
+
+    it 'raises for simple variables inside sections' do
+      tpl = described_class.new('{{#show}}{{name}}{{/show}}', strict: true)
+      expect { tpl.render(show: true) }.to raise_error(
+        Philiprehberger::Template::UndefinedVariableError
+      )
+    end
+
+    it 'exposes strict? predicate' do
+      strict_tpl = described_class.new('test', strict: true)
+      normal_tpl = described_class.new('test')
+      expect(strict_tpl.strict?).to be true
+      expect(normal_tpl.strict?).to be false
+    end
+
+    it 'inherits StandardError' do
+      expect(Philiprehberger::Template::UndefinedVariableError).to be < StandardError
+    end
+
+    it 'works with multiple variables where first is defined' do
+      tpl = described_class.new('{{a}} {{b}}', strict: true)
+      expect { tpl.render(a: 'hello') }.to raise_error(
+        Philiprehberger::Template::UndefinedVariableError,
+        /Undefined variable: b/
+      )
+    end
+
+    it 'works with compile in strict mode' do
+      described_class.clear_cache!
+      tpl = described_class.compile('{{name}}', strict: true)
+      expect(tpl.strict?).to be true
+      expect { tpl.render({}) }.to raise_error(Philiprehberger::Template::UndefinedVariableError)
+    end
+  end
+
+  describe 'whitespace control' do
+    it 'strips whitespace before the tag with ~' do
+      tpl = described_class.new("Hello   {{~ name }}")
+      expect(tpl.render(name: 'World')).to eq('HelloWorld')
+    end
+
+    it 'strips whitespace after the tag with ~' do
+      tpl = described_class.new("{{ name ~}}   there")
+      expect(tpl.render(name: 'Hello')).to eq('Hellothere')
+    end
+
+    it 'strips whitespace on both sides with ~' do
+      tpl = described_class.new("Hello   {{~ name ~}}   World")
+      expect(tpl.render(name: ', ')).to eq('Hello, World')
+    end
+
+    it 'only strips spaces and tabs, not newlines' do
+      tpl = described_class.new("Hello \t {{~ name }}")
+      expect(tpl.render(name: 'World')).to eq('HelloWorld')
+    end
+
+    it 'does not strip across newlines (before)' do
+      tpl = described_class.new("Hello\n   {{~ name }}")
+      expect(tpl.render(name: 'World')).to eq("Hello\nWorld")
+    end
+
+    it 'does not strip across newlines (after)' do
+      tpl = described_class.new("{{ name ~}}   \nthere")
+      expect(tpl.render(name: 'Hello')).to eq("Hello\nthere")
+    end
+
+    it 'works with no whitespace to strip' do
+      tpl = described_class.new("Hello{{~ name }}")
+      expect(tpl.render(name: 'World')).to eq('HelloWorld')
+    end
+
+    it 'handles ~ on variable with filters' do
+      tpl = described_class.new("Hello   {{~ name | upcase }}")
+      expect(tpl.render(name: 'world')).to eq('HelloWORLD')
+    end
+
+    it 'handles multiple whitespace-controlled tags' do
+      tpl = described_class.new("A   {{~ x ~}}   B   {{~ y ~}}   C")
+      expect(tpl.render(x: '1', y: '2')).to eq('A1B2C')
+    end
+
+    it 'works without ~ (no stripping)' do
+      tpl = described_class.new("Hello   {{ name }}   World")
+      expect(tpl.render(name: 'there')).to eq('Hello   there   World')
     end
   end
 end
