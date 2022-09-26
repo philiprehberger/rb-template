@@ -94,12 +94,12 @@ module Philiprehberger
 
       def apply_whitespace_control(tokens)
         tokens.each_with_index do |token, i|
-          next if token[0] == :text || token[0] == :delimiter_change || token[0] == :comment
+          next if %i[text delimiter_change comment].include?(token[0])
 
           meta = token[1]
           next unless meta.is_a?(Hash)
 
-          if meta[:strip_before] && i > 0 && tokens[i - 1][0] == :text
+          if meta[:strip_before] && i.positive? && tokens[i - 1][0] == :text
             # Strip trailing whitespace (spaces/tabs) from the preceding text node
             tokens[i - 1][1] = tokens[i - 1][1].sub(/[ \t]+\z/, '')
           end
