@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Logic-less Mustache-style template engine with safe rendering'
   spec.description = 'A lightweight Mustache-style template engine supporting variable ' \
-                       'interpolation, sections, inverted sections, and nested scopes ' \
-                       'with safe rendering that never raises on missing variables.'
+                     'interpolation, sections, inverted sections, and nested scopes ' \
+                     'with safe rendering that never raises on missing variables.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-template'
   spec.license = 'MIT'
 
