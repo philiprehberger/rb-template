@@ -57,6 +57,8 @@ module Philiprehberger
             else
               filter.call(val)
             end
+          elsif @strict
+            raise UndefinedFilterError, filter_info[:name]
           else
             val.to_s
           end

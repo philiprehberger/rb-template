@@ -7,6 +7,13 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-05
+
+### Added
+- Strict mode now raises `UndefinedFilterError` for unknown filters
+- `Template.registered_partials` and `Template.registered_layouts` class methods
+- Thread-safety note in README
+
 ## [0.4.1] - 2026-03-31
 
 ### Changed
