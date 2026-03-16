@@ -2,8 +2,13 @@
 
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-template.svg)](https://badge.fury.io/rb/philiprehberger-template)
 [![CI](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-template)](LICENSE)
 
 Logic-less Mustache-style template engine with safe rendering for Ruby.
+
+## Requirements
+
+- Ruby >= 3.1
 
 ## Installation
 
