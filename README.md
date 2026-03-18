@@ -20,7 +20,7 @@ gem 'philiprehberger-template'
 
 Or install directly:
 
-```
+```bash
 gem install philiprehberger-template
 ```
 
@@ -83,12 +83,12 @@ Renders the template with the given variable hash. Accepts both symbol and strin
 
 ## Development
 
-```
+```bash
 bundle install
-bundle exec rake spec
-bundle exec rake rubocop
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT
