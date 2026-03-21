@@ -7,27 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-03-21
+
+### Fixed
+- Standardize Installation section in README
+
 ## [0.1.5] - 2026-03-20
 
 ### Changed
 - Restructure CHANGELOG to follow Keep a Changelog format
 
-## [0.1.4] - 2026-03-20
+## [0.1.4] - 2026-03-18
 
 ### Changed
 - Revert gemspec to single-quoted strings per RuboCop default configuration
 
-## [0.1.3] - 2026-03-20
+## [0.1.3] - 2026-03-18
 
 ### Fixed
 - Fix RuboCop Style/StringLiterals violations in gemspec
 
-## [0.1.2] - 2026-03-20
+## [0.1.2] - 2026-03-16
 
 ### Added
 - Add License badge to README
 - Add bug_tracker_uri to gemspec
 - Add Requirements section to README
+
+## [0.1.1] - 2026-03-15
+
+### Added
+- Add Development section to README
 
 ## [0.1.0] - 2026-03-15
 
