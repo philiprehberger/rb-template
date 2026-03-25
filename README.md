@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-template.svg)](https://rubygems.org/gems/philiprehberger-template)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-template)](LICENSE)
 
-Logic-less Mustache-style template engine with safe rendering for Ruby
+Logic-less Mustache-style template engine with safe rendering
 
 ## Requirements
 
