@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-template.svg)](https://rubygems.org/gems/philiprehberger-template)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-template)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Logic-less Mustache-style template engine with safe rendering
 
@@ -85,4 +86,4 @@ bundle exec rubocop
 
 ## License
 
-MIT
+[MIT](LICENSE)
