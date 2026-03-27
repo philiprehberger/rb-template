@@ -33,7 +33,7 @@ module Philiprehberger
         { '#' => :section_open, '^' => :inverted_open, '/' => :section_close }.fetch(prefix, :variable)
       end
 
-      def build_tree(tokens, closing_tag) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      def build_tree(tokens, closing_tag)
         nodes = []
         while (token = tokens.shift)
           case token[0]
