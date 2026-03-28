@@ -7,6 +7,17 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-28
+
+### Added
+- Partials/includes support (`{{> partial_name}}`) with `register_partial` and `clear_partials!`
+- Custom delimiters (`{{= <% %> =}}`) to change tag delimiters mid-template
+- Filter/pipe syntax (`{{name | upcase}}`) with built-in filters: upcase, downcase, strip, escape, capitalize, reverse, length, default
+- Custom filter registration via `Filters.register`
+- Template compilation and caching via `Template.compile` for repeated renders
+- Template inheritance/layouts (`{{< layout}}` with `{{$ block_name}}` block overrides)
+- Lambda/Proc support in sections for dynamic content generation
+
 ## [0.2.2] - 2026-03-26
 
 ### Changed
