@@ -7,6 +7,13 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-29
+
+### Added
+- Comment syntax (`{{! comment }}`) for stripping comments from rendered output, including multi-line support
+- Strict mode (`Template.new(source, strict: true)`) that raises `UndefinedVariableError` for undefined variables
+- Whitespace control (`{{~ var }}`, `{{ var ~}}`, `{{~ var ~}}`) for trimming spaces and tabs around tags
+
 ## [0.3.0] - 2026-03-28
 
 ### Added

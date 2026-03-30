@@ -15,6 +15,14 @@ module Philiprehberger
         nil
       end
 
+      def defined?(name)
+        key = name.to_sym
+        @stack.reverse_each do |scope|
+          return true if scope.key?(key)
+        end
+        false
+      end
+
       def push(scope)
         @stack.push(normalize(scope))
       end

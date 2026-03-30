@@ -1,6 +1,6 @@
 # philiprehberger-template
 
-[![Tests](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml) [![Gem Version](https://img.shields.io/gem/v/philiprehberger-template)](https://rubygems.org/gems/philiprehberger-template) [![GitHub release](https://img.shields.io/github/v/release/philiprehberger/rb-template)](https://github.com/philiprehberger/rb-template/releases) [![GitHub last commit](https://img.shields.io/github/last-commit/philiprehberger/rb-template)](https://github.com/philiprehberger/rb-template/commits/main) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Bug Reports](https://img.shields.io/badge/bug-reports-red.svg)](https://github.com/philiprehberger/rb-template/issues) [![Feature Requests](https://img.shields.io/badge/feature-requests-blue.svg)](https://github.com/philiprehberger/rb-template/issues) [![GitHub Sponsors](https://img.shields.io/badge/sponsor-philiprehberger-ea4aaa.svg?logo=github)](https://github.com/sponsors/philiprehberger)
+[![Tests](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-template/actions/workflows/ci.yml) [![Gem Version](https://badge.fury.io/rb/philiprehberger-template.svg)](https://rubygems.org/gems/philiprehberger-template) [![GitHub release](https://img.shields.io/github/v/release/philiprehberger/rb-template)](https://github.com/philiprehberger/rb-template/releases) [![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-template)](https://github.com/philiprehberger/rb-template/commits/main) [![License](https://img.shields.io/github/license/philiprehberger/rb-template)](LICENSE) [![Bug Reports](https://img.shields.io/github/issues/philiprehberger/rb-template/bug)](https://github.com/philiprehberger/rb-template/issues?q=is%3Aissue+is%3Aopen+label%3Abug) [![Feature Requests](https://img.shields.io/github/issues/philiprehberger/rb-template/enhancement)](https://github.com/philiprehberger/rb-template/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement) [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Logic-less Mustache-style template engine with safe rendering
 
@@ -24,21 +24,12 @@ gem install philiprehberger-template
 
 ## Usage
 
-### Basic Variables
-
 ```ruby
 require "philiprehberger/template"
 
 tpl = Philiprehberger::Template.new("Hello, {{name}}!")
 tpl.render(name: "World")
 # => "Hello, World!"
-```
-
-### Load from File
-
-```ruby
-tpl = Philiprehberger::Template.from_file("greeting.mustache")
-tpl.render(name: "World")
 ```
 
 ### Sections and Inverted Sections
@@ -163,13 +154,60 @@ tpl.render(name: "Alice", wrap: ->(raw) { "[#{raw}]" })
 # => "[{{name}}]"
 ```
 
+### Comments
+
+```ruby
+# Comments are stripped from rendered output
+tpl = Philiprehberger::Template.new("Hello{{! This is a comment }} World")
+tpl.render({})
+# => "Hello World"
+
+# Multi-line comments
+tpl = Philiprehberger::Template.new("Hello{{! this is\na multi-line comment }}World")
+tpl.render({})
+# => "HelloWorld"
+```
+
+### Strict Mode
+
+```ruby
+# Raises UndefinedVariableError for missing variables
+tpl = Philiprehberger::Template.new("Hello, {{name}}!", strict: true)
+tpl.render(name: "World")  # => "Hello, World!"
+tpl.render({})             # => raises UndefinedVariableError
+
+# Default mode renders empty string for missing variables
+tpl = Philiprehberger::Template.new("Hello, {{name}}!")
+tpl.render({})
+# => "Hello, !"
+```
+
+### Whitespace Control
+
+```ruby
+# Strip whitespace before the tag
+tpl = Philiprehberger::Template.new("Hello   {{~ name }}")
+tpl.render(name: "World")
+# => "HelloWorld"
+
+# Strip whitespace after the tag
+tpl = Philiprehberger::Template.new("{{ name ~}}   there")
+tpl.render(name: "Hello")
+# => "Hellothere"
+
+# Strip both sides
+tpl = Philiprehberger::Template.new("Hello   {{~ name ~}}   World")
+tpl.render(name: ", ")
+# => "Hello, World"
+```
+
 ## API
 
 | Method | Description |
 |--------|-------------|
-| `Template.new(source)` | Compile a template string into a renderable template |
-| `Template.from_file(path)` | Read a file and compile its contents as a template |
-| `Template.compile(source)` | Compile and cache a template for repeated rendering |
+| `Template.new(source, strict: false)` | Compile a template string into a renderable template |
+| `Template.from_file(path, strict: false)` | Read a file and compile its contents as a template |
+| `Template.compile(source, strict: false)` | Compile and cache a template for repeated rendering |
 | `Template.register_partial(name, source)` | Register a named partial template |
 | `Template.clear_partials!` | Remove all registered partials |
 | `Template.register_layout(name, source)` | Register a named layout template |
@@ -180,6 +218,7 @@ tpl.render(name: "Alice", wrap: ->(raw) { "[#{raw}]" })
 | `Filters.reset_custom!` | Remove all custom filters |
 | `#render(variables = {})` | Render the template with the given variable hash |
 | `#source` | Returns the original template source string |
+| `#strict?` | Returns whether the template uses strict mode |
 
 ## Development
 
@@ -191,7 +230,10 @@ bundle exec rubocop
 
 ## Support
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Philip%20Rehberger-blue?logo=linkedin)](https://linkedin.com/in/philiprehberger) [![More Packages](https://img.shields.io/badge/more-packages-blue.svg)](https://github.com/philiprehberger?tab=repositories)
+If you find this package useful, consider giving it a star on GitHub — it helps motivate continued maintenance and development.
+
+[![LinkedIn](https://img.shields.io/badge/Philip%20Rehberger-LinkedIn-0A66C2?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/more-open%20source%20packages-blue)](https://philiprehberger.com/open-source-packages)
 
 ## License
 

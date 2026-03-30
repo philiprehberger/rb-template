@@ -11,6 +11,7 @@ module Philiprehberger
 
       def parse
         tokens = tokenize
+        apply_whitespace_control(tokens)
         build_tree(tokens, nil)
       end
 
@@ -19,7 +20,7 @@ module Philiprehberger
       def tag_pattern
         open = Regexp.escape(@open_delim)
         close = Regexp.escape(@close_delim)
-        %r{#{open}(=|[#^/><$]?)(.+?)(?:=#{close}|#{close})}
+        %r{#{open}(=|[!#^/><$]?)(.+?)(?:=#{close}|#{close})}m
       end
 
       def tokenize
@@ -38,15 +39,40 @@ module Philiprehberger
               @close_delim = parts[1]
               tokens << [:delimiter_change, parts]
             end
+          elsif prefix == '!'
+            # Comment — strip from output entirely
+            tokens << [:comment, content]
           else
-            type = tag_type(prefix, content)
-            tokens << [type, content]
+            type, parsed_content = parse_tag(prefix, content)
+            tokens << [type, parsed_content]
           end
 
           scanner = match.post_match
         end
         tokens << [:text, scanner] unless scanner.empty?
         tokens
+      end
+
+      def parse_tag(prefix, content)
+        strip_before = false
+        strip_after = false
+
+        # Check for whitespace control markers on the content
+        if prefix.empty? || prefix == '#' || prefix == '^' || prefix == '/' ||
+           prefix == '>' || prefix == '<' || prefix == '$'
+          if content.start_with?('~')
+            strip_before = true
+            content = content[1..].strip
+          end
+          if content.end_with?('~')
+            strip_after = true
+            content = content[0...-1].strip
+          end
+        end
+
+        type = tag_type(prefix, content)
+        parsed = { value: content, strip_before: strip_before, strip_after: strip_after }
+        [type, parsed]
       end
 
       def tag_type(prefix, content)
@@ -66,38 +92,64 @@ module Philiprehberger
         end
       end
 
+      def apply_whitespace_control(tokens)
+        tokens.each_with_index do |token, i|
+          next if token[0] == :text || token[0] == :delimiter_change || token[0] == :comment
+
+          meta = token[1]
+          next unless meta.is_a?(Hash)
+
+          if meta[:strip_before] && i > 0 && tokens[i - 1][0] == :text
+            # Strip trailing whitespace (spaces/tabs) from the preceding text node
+            tokens[i - 1][1] = tokens[i - 1][1].sub(/[ \t]+\z/, '')
+          end
+
+          if meta[:strip_after] && i < tokens.size - 1 && tokens[i + 1][0] == :text
+            # Strip leading whitespace (spaces/tabs) from the following text node
+            tokens[i + 1][1] = tokens[i + 1][1].sub(/\A[ \t]+/, '')
+          end
+        end
+      end
+
       def build_tree(tokens, closing_tag)
         nodes = []
         while (token = tokens.shift)
           case token[0]
           when :text
             nodes << { type: :text, value: token[1] }
+          when :comment
+            # Comments are stripped entirely — no node emitted
+            next
           when :variable
-            nodes << { type: :variable, name: token[1] }
+            nodes << { type: :variable, name: token[1][:value] }
           when :filtered_variable
-            parts = token[1].split('|').map(&:strip)
+            parts = token[1][:value].split('|').map(&:strip)
             name = parts.shift
             filter_list = parts.map { |f| parse_filter(f) }
             nodes << { type: :filtered_variable, name: name, filters: filter_list }
           when :section_open
-            children = build_tree(tokens, token[1])
-            raw = extract_raw_source(token[1], children)
-            nodes << { type: :section, name: token[1], children: children, raw_content: raw }
+            tag_name = token[1][:value]
+            children = build_tree(tokens, tag_name)
+            raw = extract_raw_source(tag_name, children)
+            nodes << { type: :section, name: tag_name, children: children, raw_content: raw }
           when :inverted_open
-            nodes << { type: :inverted, name: token[1], children: build_tree(tokens, token[1]) }
+            tag_name = token[1][:value]
+            nodes << { type: :inverted, name: tag_name, children: build_tree(tokens, tag_name) }
           when :section_close
             if closing_tag
-              clean_closing = token[1].strip
+              clean_closing = token[1][:value].strip
               clean_expected = closing_tag.strip
-              raise "Mismatched tag: {{/#{token[1]}}}" if clean_closing != clean_expected
+              raise "Mismatched tag: {{/#{token[1][:value]}}}" if clean_closing != clean_expected
             end
             return nodes
           when :partial
-            nodes << { type: :partial, name: token[1] }
+            nodes << { type: :partial, name: token[1][:value] }
           when :layout
-            nodes << { type: :layout, name: token[1], children: build_tree(tokens, token[1]) }
+            tag_name = token[1][:value]
+            nodes << { type: :layout, name: tag_name, children: build_tree(tokens, tag_name) }
           when :block_open
-            nodes << { type: :block, name: token[1], children: build_tree(tokens, token[1]) }
+            tag_name = token[1][:value]
+            nodes << { type: :block, name: tag_name, children: build_tree(tokens, tag_name) }
           when :delimiter_change
             # No node needed; delimiters already changed during tokenization
           end

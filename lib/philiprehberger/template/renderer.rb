@@ -3,11 +3,12 @@
 module Philiprehberger
   class Template
     class Renderer
-      def initialize(tree, context, partials: {}, layouts: {})
+      def initialize(tree, context, partials: {}, layouts: {}, strict: false)
         @tree = tree
         @context = context
         @partials = partials
         @layouts = layouts
+        @strict = strict
       end
 
       def render
@@ -23,7 +24,7 @@ module Philiprehberger
       def render_node(node)
         case node[:type]
         when :text              then node[:value]
-        when :variable          then @context.lookup(node[:name]).to_s
+        when :variable          then render_variable(node)
         when :filtered_variable then render_filtered(node)
         when :section           then render_section(node)
         when :inverted          then render_inverted(node)
@@ -33,8 +34,21 @@ module Philiprehberger
         end
       end
 
+      def render_variable(node)
+        value = @context.lookup(node[:name])
+        if value.nil? && @strict && !@context.defined?(node[:name])
+          raise UndefinedVariableError, node[:name]
+        end
+
+        value.to_s
+      end
+
       def render_filtered(node)
         value = @context.lookup(node[:name])
+        if value.nil? && @strict && !@context.defined?(node[:name])
+          raise UndefinedVariableError, node[:name]
+        end
+
         node[:filters].reduce(value) do |val, filter_info|
           filter = Filters.resolve(filter_info[:name])
           if filter
