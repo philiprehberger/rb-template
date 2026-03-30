@@ -649,17 +649,17 @@ RSpec.describe Philiprehberger::Template do
 
   describe 'whitespace control' do
     it 'strips whitespace before the tag with ~' do
-      tpl = described_class.new("Hello   {{~ name }}")
+      tpl = described_class.new('Hello   {{~ name }}')
       expect(tpl.render(name: 'World')).to eq('HelloWorld')
     end
 
     it 'strips whitespace after the tag with ~' do
-      tpl = described_class.new("{{ name ~}}   there")
+      tpl = described_class.new('{{ name ~}}   there')
       expect(tpl.render(name: 'Hello')).to eq('Hellothere')
     end
 
     it 'strips whitespace on both sides with ~' do
-      tpl = described_class.new("Hello   {{~ name ~}}   World")
+      tpl = described_class.new('Hello   {{~ name ~}}   World')
       expect(tpl.render(name: ', ')).to eq('Hello, World')
     end
 
@@ -679,22 +679,22 @@ RSpec.describe Philiprehberger::Template do
     end
 
     it 'works with no whitespace to strip' do
-      tpl = described_class.new("Hello{{~ name }}")
+      tpl = described_class.new('Hello{{~ name }}')
       expect(tpl.render(name: 'World')).to eq('HelloWorld')
     end
 
     it 'handles ~ on variable with filters' do
-      tpl = described_class.new("Hello   {{~ name | upcase }}")
+      tpl = described_class.new('Hello   {{~ name | upcase }}')
       expect(tpl.render(name: 'world')).to eq('HelloWORLD')
     end
 
     it 'handles multiple whitespace-controlled tags' do
-      tpl = described_class.new("A   {{~ x ~}}   B   {{~ y ~}}   C")
+      tpl = described_class.new('A   {{~ x ~}}   B   {{~ y ~}}   C')
       expect(tpl.render(x: '1', y: '2')).to eq('A1B2C')
     end
 
     it 'works without ~ (no stripping)' do
-      tpl = described_class.new("Hello   {{ name }}   World")
+      tpl = described_class.new('Hello   {{ name }}   World')
       expect(tpl.render(name: 'there')).to eq('Hello   there   World')
     end
   end
