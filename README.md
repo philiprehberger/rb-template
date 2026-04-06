@@ -178,6 +178,10 @@ tpl = Philiprehberger::Template.new("Hello, {{name}}!", strict: true)
 tpl.render(name: "World")  # => "Hello, World!"
 tpl.render({})             # => raises UndefinedVariableError
 
+# Raises UndefinedFilterError for unknown filters
+tpl = Philiprehberger::Template.new("{{name | bogus}}", strict: true)
+tpl.render(name: "hi")     # => raises UndefinedFilterError
+
 # Default mode renders empty string for missing variables
 tpl = Philiprehberger::Template.new("Hello, {{name}}!")
 tpl.render({})
@@ -214,6 +218,8 @@ tpl.render(name: ", ")
 | `Template.clear_partials!` | Remove all registered partials |
 | `Template.register_layout(name, source)` | Register a named layout template |
 | `Template.clear_layouts!` | Remove all registered layouts |
+| `Template.registered_partials` | List names of all registered partials |
+| `Template.registered_layouts` | List names of all registered layouts |
 | `Template.clear_cache!` | Clear the compiled template cache |
 | `Template.cache` | Access the template cache instance |
 | `Filters.register(name, callable)` | Register a custom filter |
@@ -221,6 +227,10 @@ tpl.render(name: ", ")
 | `#render(variables = {})` | Render the template with the given variable hash |
 | `#source` | Returns the original template source string |
 | `#strict?` | Returns whether the template uses strict mode |
+
+### Thread Safety
+
+Note: `Template.register_partial`, `Template.register_layout`, and the compilation cache are class-level shared state. If you register partials or layouts from multiple threads simultaneously, wrap the calls in a Mutex.
 
 ## Development
 

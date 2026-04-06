@@ -253,6 +253,16 @@ RSpec.describe Philiprehberger::Template do
       described_class.clear_partials!
       expect(described_class.partials).to be_empty
     end
+
+    it 'returns registered partial names' do
+      described_class.register_partial('header', '<h1>{{title}}</h1>')
+      described_class.register_partial('footer', '<footer>{{year}}</footer>')
+      expect(described_class.registered_partials).to contain_exactly('header', 'footer')
+    end
+
+    it 'returns empty array when no partials are registered' do
+      expect(described_class.registered_partials).to eq([])
+    end
   end
 
   describe 'custom delimiters' do
@@ -353,6 +363,19 @@ RSpec.describe Philiprehberger::Template do
     it 'handles unknown filters gracefully' do
       tpl = described_class.new('{{name | nonexistent}}')
       expect(tpl.render(name: 'hello')).to eq('hello')
+    end
+
+    it 'raises UndefinedFilterError for unknown filters in strict mode' do
+      tpl = described_class.new('{{name | bogus}}', strict: true)
+      expect { tpl.render(name: 'hi') }.to raise_error(
+        Philiprehberger::Template::UndefinedFilterError,
+        /Undefined filter: bogus/
+      )
+    end
+
+    it 'does not raise for unknown filters in non-strict mode' do
+      tpl = described_class.new('{{name | bogus}}')
+      expect(tpl.render(name: 'hi')).to eq('hi')
     end
 
     it 'supports custom filters' do
@@ -464,6 +487,16 @@ RSpec.describe Philiprehberger::Template do
       described_class.register_layout('test', 'content')
       described_class.clear_layouts!
       expect(described_class.layouts).to be_empty
+    end
+
+    it 'returns registered layout names' do
+      described_class.register_layout('base', '<html>{{$ title}}Default{{/title}}</html>')
+      described_class.register_layout('page', '{{$ body}}Body{{/body}}')
+      expect(described_class.registered_layouts).to contain_exactly('base', 'page')
+    end
+
+    it 'returns empty array when no layouts are registered' do
+      expect(described_class.registered_layouts).to eq([])
     end
   end
 

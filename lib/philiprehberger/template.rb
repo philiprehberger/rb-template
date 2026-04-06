@@ -18,6 +18,15 @@ module Philiprehberger
       end
     end
 
+    class UndefinedFilterError < StandardError
+      attr_reader :filter_name
+
+      def initialize(filter_name)
+        @filter_name = filter_name
+        super("Undefined filter: #{filter_name}")
+      end
+    end
+
     attr_reader :source, :tree
 
     @partials = {}
@@ -45,6 +54,14 @@ module Philiprehberger
 
       def clear_layouts!
         @layouts = {}
+      end
+
+      def registered_partials
+        @partials.keys
+      end
+
+      def registered_layouts
+        @layouts.keys
       end
 
       def compile(source, strict: false)
