@@ -7,6 +7,11 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-04-07
+
+### Added
+- `truncate` built-in filter with optional length argument (defaults to 30)
+
 ## [0.5.0] - 2026-04-05
 
 ### Added
