@@ -109,7 +109,14 @@ tpl.render(name: "hello")
 # => "hello!!!"
 ```
 
-Built-in filters: `upcase`, `downcase`, `strip`, `escape`, `capitalize`, `reverse`, `length`, `default`.
+Built-in filters: `upcase`, `downcase`, `strip`, `escape`, `capitalize`, `reverse`, `length`, `default`, `truncate`.
+
+```ruby
+# Truncate filter (default limit: 30)
+tpl = Philiprehberger::Template.new("{{text | truncate(10)}}")
+tpl.render(text: "Hello, beautiful world")
+# => "Hello, bea..."
+```
 
 ### Template Compilation and Caching
 
