@@ -109,13 +109,26 @@ tpl.render(name: "hello")
 # => "hello!!!"
 ```
 
-Built-in filters: `upcase`, `downcase`, `strip`, `escape`, `capitalize`, `reverse`, `length`, `default`, `truncate`.
+Built-in filters: `upcase`, `downcase`, `strip`, `escape`, `capitalize`, `reverse`, `length`, `default`, `truncate`, `titleize`.
 
 ```ruby
 # Truncate filter (default limit: 30)
 tpl = Philiprehberger::Template.new("{{text | truncate(10)}}")
 tpl.render(text: "Hello, beautiful world")
 # => "Hello, bea..."
+
+# Titleize filter — capitalize each word
+tpl = Philiprehberger::Template.new("{{title | titleize}}")
+tpl.render(title: "hello world from ruby")
+# => "Hello World From Ruby"
+```
+
+List custom filters that have been registered:
+
+```ruby
+Philiprehberger::Template::Filters.register("shout", ->(val) { "#{val}!" })
+Philiprehberger::Template.registered_filters
+# => ["shout"]
 ```
 
 ### Template Compilation and Caching
@@ -227,6 +240,7 @@ tpl.render(name: ", ")
 | `Template.clear_layouts!` | Remove all registered layouts |
 | `Template.registered_partials` | List names of all registered partials |
 | `Template.registered_layouts` | List names of all registered layouts |
+| `Template.registered_filters` | List names of all registered custom filters |
 | `Template.clear_cache!` | Clear the compiled template cache |
 | `Template.cache` | Access the template cache instance |
 | `Filters.register(name, callable)` | Register a custom filter |

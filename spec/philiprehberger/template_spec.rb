@@ -394,6 +394,22 @@ RSpec.describe Philiprehberger::Template do
       tpl = described_class.new('{{msg | escape}}')
       expect(tpl.render(msg: '"quotes" & <tags>')).to eq('&quot;quotes&quot; &amp; &lt;tags&gt;')
     end
+
+    it 'applies the titleize filter to capitalize each word' do
+      tpl = described_class.new('{{msg | titleize}}')
+      expect(tpl.render(msg: 'hello world from ruby')).to eq('Hello World From Ruby')
+    end
+
+    it 'lists registered custom filters via Template.registered_filters' do
+      Philiprehberger::Template::Filters.register('shout', ->(val) { "#{val}!" })
+      Philiprehberger::Template::Filters.register('quiet', ->(val) { val.to_s.downcase })
+      expect(described_class.registered_filters).to contain_exactly('shout', 'quiet')
+    end
+
+    it 'omits built-in filters from Template.registered_filters' do
+      Philiprehberger::Template::Filters.reset_custom!
+      expect(described_class.registered_filters).to eq([])
+    end
   end
 
   describe 'template compilation and caching' do

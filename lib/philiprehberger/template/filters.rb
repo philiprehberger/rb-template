@@ -19,7 +19,8 @@ module Philiprehberger
           limit = arg.to_i
           limit = 30 if limit <= 0
           str.length > limit ? "#{str[0, limit]}..." : str
-        }
+        },
+        'titleize' => ->(val) { val.to_s.split(/\s+/).map(&:capitalize).join(' ') }
       }.freeze
 
       @custom = {}
@@ -35,6 +36,10 @@ module Philiprehberger
 
         def reset_custom!
           @custom = {}
+        end
+
+        def registered_custom
+          @custom.keys
         end
       end
     end

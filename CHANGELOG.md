@@ -7,6 +7,12 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-01
+
+### Added
+- `Template.registered_filters` — list custom filter names registered via `Filters.register`; mirrors `registered_partials` and `registered_layouts`
+- `titleize` built-in filter — capitalize each whitespace-separated word
+
 ## [0.5.1] - 2026-04-07
 
 ### Added

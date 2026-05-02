@@ -64,6 +64,14 @@ module Philiprehberger
         @layouts.keys
       end
 
+      # Names of every custom filter currently registered via
+      # {Filters.register}. Built-in filters are not listed.
+      #
+      # @return [Array<String>] custom filter names
+      def registered_filters
+        Filters.registered_custom
+      end
+
       def compile(source, strict: false)
         cache_key = [source, strict]
         cached = @cache.fetch(cache_key)
